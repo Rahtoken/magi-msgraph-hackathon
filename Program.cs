@@ -60,6 +60,10 @@ rootCommand.SetHandler(async (query, configFile) =>
         var graphResponse = await httpClient.SendAsync(graphRequest);
         Console.WriteLine(JsonPrettify(await graphResponse.Content.ReadAsStringAsync()));
     }
+    else
+    {
+        Console.WriteLine(response);
+    }
 }, queryArgument, configFileArgument);
 
 return await rootCommand.InvokeAsync(args);
