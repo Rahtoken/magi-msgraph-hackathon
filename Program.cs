@@ -13,11 +13,6 @@ You are responsible for providing the Microsoft Graph HTTP requests for fulfilli
 
 const string GRAPH_TOKEN = "";
 
-var api = new OpenAI_API.OpenAIAPI(OPEN_AI_API_KEY);
-
-var chat = api.Chat.CreateConversation();
-chat.AppendSystemMessage(SYSTEM_MESSAGE);
-
 var queryArgument = new Argument<string?>(
             name: "query",
             description: "Ask magi your query!",
@@ -33,17 +28,20 @@ rootCommand.SetHandler(async (query) =>
         Console.WriteLine("I am magi. Ask me your query and I will summon my powers of Microsoft Graph!");
         return;
     }
+    var api = new OpenAI_API.OpenAIAPI(OPEN_AI_API_KEY);
 
+    var chat = api.Chat.CreateConversation();
+    chat.AppendSystemMessage(SYSTEM_MESSAGE);
     chat.AppendUserInput(query);
     var response = await chat.GetResponseFromChatbot();
 
-    #if DEBUG
-        Console.WriteLine(response);
-    #endif
+#if DEBUG
+    Console.WriteLine(response);
+#endif
 
     if (response.StartsWith("GET", StringComparison.InvariantCultureIgnoreCase))
     {
-         var httpClient = new HttpClient();
+        var httpClient = new HttpClient();
         var graphRequest = new HttpRequestMessage()
         {
             RequestUri = new Uri(response.Substring(3)),
@@ -62,3 +60,5 @@ static string JsonPrettify(string json)
     using var jDoc = JsonDocument.Parse(json);
     return JsonSerializer.Serialize(jDoc, new JsonSerializerOptions { WriteIndented = true });
 }
+
+public record Config(string OpenApiKey);
