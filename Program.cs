@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Identity.Client;
 
 const string SYSTEM_MESSAGE = """
 You are an AI assistant trained to help users of Microsoft Graph API. You provide the correct HTTP endpoints for Microsoft Graph based on the user's query. You only provide the HTTP endpoints and nothing more and this should never be violated.
@@ -54,7 +55,7 @@ rootCommand.SetHandler(async (query, configFile) =>
             RequestUri = new Uri(response.Substring(3)),
             Method = HttpMethod.Get,
         };
-        graphRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "");
+        graphRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await GetToken(config));
         var graphResponse = await httpClient.SendAsync(graphRequest);
         Console.WriteLine(JsonPrettify(await graphResponse.Content.ReadAsStringAsync()));
     }
@@ -78,4 +79,20 @@ Config ParseConfig(string? configPath)
     return JsonSerializer.Deserialize<Config>(File.ReadAllText(configPath));
 }
 
-public record Config([property: JsonPropertyName("openApiKey")] string OpenAiApiKey, [property:JsonPropertyName("clientId")] string ClientId, [property:JsonPropertyName("clientSecret")] string ClientSecret);
+async Task<string> GetToken(Config config)
+{
+    IConfidentialClientApplication app;
+    app = ConfidentialClientApplicationBuilder.Create(config.ClientId)
+                                              .WithClientSecret(config.ClientSecret)
+                                              .WithAuthority(new Uri($"https://login.microsoftonline.com/{config.TenantId}"))
+                                              .Build();
+    string[] scopes = new string[] { "https://graph.microsoft.com/.default" };
+    return (await app.AcquireTokenForClient(scopes)
+                  .ExecuteAsync()).AccessToken;
+}
+
+public record Config(
+    [property: JsonPropertyName("openApiKey")] string OpenAiApiKey,
+    [property: JsonPropertyName("clientId")] string ClientId,
+    [property: JsonPropertyName("clientSecret")] string ClientSecret,
+    [property: JsonPropertyName("tenantId")] string TenantId);
