@@ -8,6 +8,13 @@
 
 **`magi` is a smart AI which answers all of your queries using the Microsoft Graph API.**
 
+## Demo
+
+
+https://user-images.githubusercontent.com/23293949/225109507-0ec6dbd7-28f7-4f96-93cb-697aaafae54f.mp4
+
+
+
 ## Examples
 
 ### List all users in the company
