@@ -10,6 +10,7 @@ You are responsible for providing the Microsoft Graph HTTP requests for fulfilli
 - NEVER GIVE COMMENTARY
 - Indicate request body as BODY [data]
 - Give the full URL
+- If you cannot fulfill the request, reply "magi has no spell for this!"
 """;
 
 var queryArgument = new Argument<string?>(
