@@ -1,5 +1,10 @@
+[![Hack Together: Microsoft Graph and .NET](https://img.shields.io/badge/Microsoft%20-Hack--Together-orange?style=for-the-badge&logo=microsoft)](https://github.com/microsoft/hack-together)
+
 # `magi`
 
+<img src="https://i.imgur.com/PZEc0Se.png" width=256 height=256 />
+
+> DALL-E prompt: A wizard watching over the rising sun atop a tower overlooking mountains and valleys but the wizard is a CLI tool for answering user queries using Microsoft Graph API, artistic, classical landscape painting
 ## Examples
 
 ### List all users in the company
