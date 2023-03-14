@@ -18,30 +18,42 @@ var api = new OpenAI_API.OpenAIAPI(OPEN_AI_API_KEY);
 var chat = api.Chat.CreateConversation();
 chat.AppendSystemMessage(SYSTEM_MESSAGE);
 
-var queryOption = new Argument<string>(
-            name: "--query",
-            description: "Your query.");
+var queryArgument = new Argument<string?>(
+            name: "query",
+            description: "Ask magi your query!",
+            getDefaultValue: () => null);
 
 var rootCommand = new RootCommand("magi - Microsoft Graph API's AI");
-rootCommand.AddArgument(queryOption);
+rootCommand.AddArgument(queryArgument);
 
 rootCommand.SetHandler(async (query) =>
 {
+    if (query == null)
+    {
+        Console.WriteLine("I am magi. Ask me your query and I will summon my powers of Microsoft Graph!");
+        return;
+    }
+
     chat.AppendUserInput(query);
     var response = await chat.GetResponseFromChatbot();
-    Console.WriteLine(response);
-    if (response.StartsWith("GET", StringComparison.InvariantCultureIgnoreCase) || response.StartsWith("POST", StringComparison.InvariantCultureIgnoreCase)) {
-        var httpClient = new HttpClient();
-        var graphRequest = new HttpRequestMessage() {
+
+    #if DEBUG
+        Console.WriteLine(response);
+    #endif
+
+    if (response.StartsWith("GET", StringComparison.InvariantCultureIgnoreCase))
+    {
+         var httpClient = new HttpClient();
+        var graphRequest = new HttpRequestMessage()
+        {
             RequestUri = new Uri(response.Substring(3)),
             Method = HttpMethod.Get,
         };
-        graphRequest.Headers.TryAddWithoutValidation("Authorization", $"Bearer {GRAPH_TOKEN}");
+        graphRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GRAPH_TOKEN);
         var graphResponse = await httpClient.SendAsync(graphRequest);
-        // var jsonContent = System.Text.Json.JsonSerializer.Deserialize<object>(graphResponse.Content.ReadAsStream());
         Console.WriteLine(JsonPrettify(await graphResponse.Content.ReadAsStringAsync()));
     }
-}, queryOption);
+}, queryArgument);
 
 return await rootCommand.InvokeAsync(args);
 
