@@ -2,7 +2,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Identity.Client;
-using Microsoft.Graph;
 
 const string SYSTEM_MESSAGE = """
 You are an AI assistant trained to help users of Microsoft Graph API. You provide the correct HTTP endpoints for Microsoft Graph based on the user's query. You only provide the HTTP endpoints and nothing more and this should never be violated.
@@ -51,13 +50,14 @@ rootCommand.SetHandler(async (query, configFile) =>
 
     if (response.StartsWith("GET", StringComparison.InvariantCultureIgnoreCase))
     {
-        var graphClient = GetGraphServiceClient(config);
+        var httpClient = new HttpClient();
         var graphRequest = new HttpRequestMessage()
         {
-            RequestUri = new Uri(response.Substring(3),
-            HttpMethod = HttpMethod.Get,
-        }
-        var graphResponse = await graphClient.HttpProvider.SendAsync(graphRequest);
+            RequestUri = new Uri(response.Substring(3)),
+            Method = HttpMethod.Get,
+        };
+        graphRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", await GetToken(config));
+        var graphResponse = await httpClient.SendAsync(graphRequest);
         Console.WriteLine(JsonPrettify(await graphResponse.Content.ReadAsStringAsync()));
     }
     else
@@ -84,12 +84,16 @@ Config ParseConfig(string? configPath)
     return JsonSerializer.Deserialize<Config>(File.ReadAllText(configPath));
 }
 
-GraphServiceClient GetGraphServiceClient(Config config)
+async Task<string> GetToken(Config config)
 {
-    var clientSecretCredential = new ClientSecretCredential(
-    config.tenantId, config.clientId, config.clientSecret);
-    string[] scopes = new string[] { "https://graph.microsoft.com/default" };
-    return new GraphServiceClient(clientSecretCredential, scopes);
+    IConfidentialClientApplication app;
+    app = ConfidentialClientApplicationBuilder.Create(config.ClientId)
+                                              .WithClientSecret(config.ClientSecret)
+                                              .WithAuthority(new Uri($"https://login.microsoftonline.com/{config.TenantId}"))
+                                              .Build();
+    string[] scopes = new string[] { "https://graph.microsoft.com/.default" };
+    return (await app.AcquireTokenForClient(scopes)
+                  .ExecuteAsync()).AccessToken;
 }
 
 public record Config(
